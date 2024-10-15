@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const { google } = require("googleapis");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const app = express();
 const router = express.Router();
@@ -9,7 +10,30 @@ const router = express.Router();
 app.use(cors());
 app.use(express.json());
 
-const { calendar_id, client_email, private_key } = process.env;
+const { calendar_id, client_email, private_key, MONGODB_URI, NODE_ENV } =
+  process.env;
+
+// Rate limiter & MongoDB
+const RATE_LIMIT_INTERVAL = 1000 * 15; // 1 hour
+const isDev = NODE_ENV === "development";
+
+const RateLimitSchema = new mongoose.Schema({
+  ip: { type: String, required: true, unique: true },
+  lastSubmission: { type: Date, required: true },
+});
+
+RateLimitSchema.index(
+  { lastSubmission: 1 },
+  { expireAfterSeconds: RATE_LIMIT_INTERVAL / 1000 }
+);
+
+const RateLimit = mongoose.model("RateLimit", RateLimitSchema);
+
+// Connect to MongoDB
+mongoose
+  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB connected 🙌🏼 🙌🏼"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const auth = new google.auth.JWT({
@@ -49,6 +73,35 @@ router.get("/events", async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).send(`Error retriving events: ${error}`);
+  }
+});
+
+// Middleware to check rate-limiting based on IP address
+router.use("/events/add", async (req, res, next) => {
+  const userIp = req.ip;
+  const currentTime = Date.now();
+
+  try {
+    let rateLimitDoc = await RateLimit.findOne({ ip: userIp });
+
+    if (rateLimitDoc) {
+      if (currentTime - rateLimitDoc.lastSubmission < RATE_LIMIT_INTERVAL) {
+        return res
+          .status(429)
+          .json({ message: "Too many submissions, please try again later." });
+      }
+
+      rateLimitDoc.lastSubmission = currentTime;
+      await rateLimitDoc.save();
+    } else {
+      rateLimitDoc = new RateLimit({ ip: userIp, lastSubmission: currentTime });
+      rateLimitDoc.save();
+    }
+
+    next();
+  } catch (err) {
+    console.error("Error checking rate limit:", err);
+    res.status(500).send("Internal server error.");
   }
 });
 
