@@ -14,8 +14,9 @@ const { calendar_id, client_email, private_key, MONGODB_URI, NODE_ENV } =
   process.env;
 
 // Rate limiter & MongoDB
-const RATE_LIMIT_INTERVAL = 1000 * 15; // 1 hour
 const isDev = NODE_ENV === "development";
+const RATE_LIMIT_INTERVAL = isDev ? 1000 * 15 : 1000 * 60 * 60; // 1 hour
+console.log(RATE_LIMIT_INTERVAL, NODE_ENV);
 
 const RateLimitSchema = new mongoose.Schema({
   ip: { type: String, required: true, unique: true },
