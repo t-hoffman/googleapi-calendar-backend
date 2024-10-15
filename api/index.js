@@ -10,7 +10,7 @@ const router = express.Router();
 app.use(cors());
 app.use(express.json());
 
-const { calendar_id, client_email, private_key, MONGODB_URI, NODE_ENV } =
+const { CALENDAR_ID, CLIENT_EMAIL, PRIVATE_KEY, MONGODB_URI, NODE_ENV } =
   process.env;
 
 // Rate limiter & MongoDB
@@ -38,13 +38,13 @@ mongoose
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const auth = new google.auth.JWT({
-  email: client_email,
-  key: private_key,
+  email: CLIENT_EMAIL,
+  key: PRIVATE_KEY,
   scopes: SCOPES,
 });
 
 const calendar = google.calendar({ version: "v3", auth });
-const calendarId = calendar_id;
+const calendarId = CALENDAR_ID;
 
 router.get("/events", async (req, res) => {
   try {
