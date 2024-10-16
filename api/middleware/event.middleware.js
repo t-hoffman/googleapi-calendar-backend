@@ -2,7 +2,8 @@ const { RateLimit } = require("../models");
 const { RATE_LIMIT_INTERVAL } = require("../config/config");
 
 exports.rateLimiter = async (req, res, next) => {
-  const userIp = req.ip;
+  const userIp = req.headers["x-forwarded-for"] || req.ip;
+  console.log("USER IP:", userIp);
   const currentTime = Date.now();
 
   try {
