@@ -1,3 +1,21 @@
+// const { body, validationResult } = require("express-validator");
+// const validator = require("validator");
+// const eventValidationRules = [
+//   body("startDate")
+//     .isISO8601()
+//     .withMessage("Invalid start date format.  Expected ISO 8601 format.")
+//     .toDate(),
+//   body("endDate")
+//     .isISO8601()
+//     .withMessage("Invalid end date format.  Expected ISO 8601 format.")
+//     .toDate(),
+//   body("timeZone")
+//     .isString()
+//     .withMessage("Time zone must be a string.")
+//     .trim()
+//     .escape(),
+// ];
+
 const { CALENDAR_ID, CLIENT_EMAIL, PRIVATE_KEY } = require("../config/config");
 const { google } = require("googleapis");
 
@@ -31,8 +49,8 @@ exports.listEvents = async (req, res) => {
 
     const eventData = [];
     response.data.items.map((event) => {
-      const { summary, start, end } = event;
-      eventData.push({ summary, start, end });
+      const { id, summary, start, end } = event;
+      eventData.push({ id, summary, start, end });
     });
 
     res.status(200).json(eventData);

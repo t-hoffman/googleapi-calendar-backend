@@ -14,5 +14,3 @@ module.exports = {
   PRIVATE_KEY,
   RATE_LIMIT_INTERVAL,
 };
-
-require("./db.connection");
