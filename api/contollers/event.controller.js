@@ -98,3 +98,21 @@ exports.addEvent = async (req, res) => {
     res.status(500).send(err);
   }
 };
+
+exports.deleteEvent = async (req, res) => {
+  try {
+    const { eventId } = req.body;
+    const response = await calendar.events.delete({
+      auth,
+      eventId,
+      calendarId,
+    });
+
+    res
+      .status(200)
+      .send(JSON.stringify({ message: "DELETE SUCCESS !!", response }));
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+};
